@@ -23,17 +23,6 @@ Bot.on("messageCreate", async function(msg)
         msg.channel.send("SEXOOOO");
     }
 
-    //
-    if(msg.author.discriminator == 8614 && Math.floor(Math.random() * 11) == 0)
-    {
-        msg.channel.send("un hambre tengo");
-    }
-    if(msg.author.discriminator == 9924 && Math.floor(Math.random() * 11) == 0)
-    {
-        msg.channel.send("otakus de mierda");
-    }
-
-
     // !ranked playerName
     if(msg.content.startsWith("!rank"))
     {
@@ -73,7 +62,7 @@ Bot.on("messageCreate", async function(msg)
         }
         catch
         {
-            msg.channel.send("Ocurrio un error");
+            msg.channel.send("Ocurrió un error");
         }
     }
 
