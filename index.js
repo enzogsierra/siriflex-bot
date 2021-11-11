@@ -3,7 +3,7 @@ import {Client, Intents, MessageEmbed} from 'discord.js';
 
 
 const Bot = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
-Bot.login("OTA1MjQ5Mzk0ODIyMTA3MTQ3.YYHVMg.X0033PFxKyi3nX0Qt5PG9b8slJE");
+Bot.login("token");
 
 
 // When bot starts
