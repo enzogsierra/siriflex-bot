@@ -1,9 +1,14 @@
-import fetch from 'cross-fetch';
 import {Client, Intents, MessageEmbed} from 'discord.js';
+import fetch from 'cross-fetch';
+
+// Load .env file
+import dotenv from 'dotenv';
+dotenv.config();
 
 
+// Load bot
 const Bot = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
-Bot.login("token");
+Bot.login(process.env.DISCORD_BOT_TOKEN);
 
 
 // When bot starts
@@ -15,28 +20,23 @@ Bot.on("ready", () =>
 // When someone sends a message
 Bot.on("messageCreate", async function(msg)
 {
-    if(msg.author.bot) return;
+    if(msg.author.bot) return; // Avoid bot using commands
 
-    //
-    if(msg.content === "sexo")
-    {
-        msg.channel.send("SEXOOOO");
-    }
 
     // !ranked playerName
     if(msg.content.startsWith("!rank"))
     {
-        if(msg.content.trim() == "!rank") return msg.reply('!rank "nick" (sin comillas imbécil)');
+        if(msg.content.trim() == "!rank") return msg.reply('!rank "nick"');
         
         try
         {
             const name = msg.content.substr(msg.content.indexOf(" ") + 1);
 
-            // Verificar que sea un jugador de Steam válido
+            // Verify if is a valid Steam player
             const data = await getPlayerData(name);
             if(!data) return msg.reply("Jugador no encontrado, verifica mayúsculas y minúsculas.");
 
-            // Verificar que tenga partidas Rankeds en la temporada actual
+            // Verify player to have rankeds matchs
             const stats = await getMostPlayedRankedMode(data.id);
             if(!stats) return msg.reply("Este jugador no tiene partidas Rankeds en esta temporada.");
 
@@ -45,8 +45,6 @@ Bot.on("messageCreate", async function(msg)
             const {tier, subTier} = stats.currentTier;
 
             const embed = new MessageEmbed();
-            embed.setColor('#1a9116');
-
             embed.setTitle(`${name} - Ranked`);
             embed.addField("Rango", `${tier} ${subTier} - ${mode}`, false);
             embed.addField("Partidas", `${roundsPlayed}`, true);
@@ -57,28 +55,29 @@ Bot.on("messageCreate", async function(msg)
             embed.addField("K/D", `${kda.toFixed(1)}`, true);
             embed.addField("Daño promedio", `${(damageDealt / roundsPlayed).toFixed(0)}`, true);
             embed.setFooter("Temporada 14");
-
+            embed.setColor('#1a9116');
             msg.channel.send({embeds: [embed]});
         }
         catch
         {
-            msg.channel.send("Ocurrió un error");
+            msg.channel.send("Ocurrio un error");
         }
     }
 
-    // !text "text"
-    if(msg.content.startsWith("!text"))
+    // !avatar "user"
+    if(msg.content.startsWith("!avatar"))
     {
-        if(msg.content.trim() == "!text") return msg.reply('!text "texto"');
+        const data = (msg.mentions.users.size) ? (msg.mentions.users.first()) : (msg.author);
+        const {username, id, avatar} = data;
+        const url = `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`;
 
-        const text = msg.content.substr(msg.content.indexOf(" ") + 1);
-
-        msg.delete()
-            .then(e =>
-            {
-                msg.channel.send(text);
-            }
-        );
+        const embed = new MessageEmbed();
+        embed.setAuthor(`Avatar de ${username}`);
+        embed.setTitle("Imagen completa");
+        embed.setURL(`${url}?size=2048`); // Full-size image
+        embed.setImage(`${url}?size=512`); // Embed message image
+        embed.setColor('#1a9116');
+        msg.channel.send({embeds: [embed]});
     }
 });
 
@@ -101,22 +100,6 @@ async function getPlayerData(playerName)
     return tmp.errors ? (null) : (tmp.data[0]);
 }
 
-async function getPlayerRankedStats(accountId)
-{
-    const opts =
-    {
-        headers: 
-        {
-            Accept: "application/vnd.api+json",
-            Authorization: "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiIxNzZmOWYzMC1kNWM0LTAxMzktZTRlOS02Mzk3ZDNjNzNlYmIiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNjI3OTExMTg1LCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6ImxhdGFtZXZlbnRzIn0.12S_uXEy_S0BNplFWvyyJmRd9Hbe5AXXQ1bLWtAmiqE"
-        }
-    };
-
-    let tmp = await fetch(`https://api.pubg.com/shards/steam/players/${accountId}/seasons/division.bro.official.pc-2018-14/ranked`, opts);
-    tmp = await tmp.json();
-    return Object.keys(tmp.data.attributes.rankedGameModeStats).length ? (tmp.data) : (null);
-}
-
 async function getMostPlayedRankedMode(accountId)
 {
     const opts =
@@ -135,7 +118,7 @@ async function getMostPlayedRankedMode(accountId)
     if(!Object.keys(tmp.data.attributes.rankedGameModeStats).length) return null;
 
     let stats = [];
-    let mostRounds = 0;
+    let mostRounds = 0; 
 
     Object.keys(tmp.data.attributes.rankedGameModeStats).forEach(key =>
     {
